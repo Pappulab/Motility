@@ -1,0 +1,52 @@
+
+units		lj
+boundary	p p p
+atom_style	bond
+ 
+log 		log.polymer.txt
+pair_style lj/cut 2.5
+pair_modify shift yes
+
+read_data initial.xyz
+bond_style fene
+special_bonds fene
+
+bond_coeff 1 100.0 1.50 1.0 1.0
+group active_particle type 2
+
+
+velocity all create 1.0 934887 rot yes dist gaussian
+
+pair_coeff	1 1 1.0 1.0 2.5
+pair_coeff 	1 2 1.0 1.0 2.5
+pair_coeff 	2 2 1.0 1.0 2.5
+neighbor       1.0 bin
+minimize 1.0e-4 1.0e-6 100 1000
+
+fix 3 all nve/limit 0.01
+fix		4 all langevin 1.0 1.0 0.5 90428
+fix 		bias_all all bias_center 0.25 0
+#fix		5 active_particle active ${f_active} 1289 Directional 0.0001 0 0 1
+#fix 5 active_particle directional ${f_active} 0 0 1
+thermo_style	custom step temp pe ke ebond
+thermo_modify flush yes
+thermo          10000
+
+timestep	0.01
+#fix 5 all spring tether 10000 0 0 0 0
+
+dump 1 all netcdf 10000 file_new.netcdf id type x y z 
+
+#dump_modify 1 flush yes pad 9
+run 10000
+unfix 3
+fix 3 all nve
+
+restart 10000  prod.restart1 prod.restart2
+run 200000
+
+
+write_data data*.xyz
+write_restart 	restart.polymer_ring
+
+print "ALL done"

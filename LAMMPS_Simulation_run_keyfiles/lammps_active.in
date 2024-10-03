@@ -1,0 +1,41 @@
+
+units		lj
+boundary	p p p
+atom_style	bond
+ 
+log 		log.polymer.txt
+pair_style lj/cut 2.5
+pair_modify shift yes
+
+read_restart prod.restart2
+bond_style fene
+special_bonds fene
+
+bond_coeff 1 100.0 1.50 1.0 1.0
+group active_particle type 2
+
+pair_coeff	1 1 0.4 1.0 2.5
+pair_coeff 	1 2 0.4 1.0 2.5
+pair_coeff 	2 2 0.4 1.0 2.5
+neighbor        0.5 bin
+#minimize 1.0e-4 1.0e-6 100 1000
+
+fix 3 all nve
+fix		4 all langevin 1 1 0.50 90428
+fix 5 active_particle directional FACT 0 0 1
+thermo_style	custom step temp pe ke ebond
+thermo_modify flush yes
+thermo          10000
+
+timestep	0.01
+
+dump 1 all custom 20000 file_trajectory.bin id type x y z xu yu zu vx vy vz
+
+restart 100000  prod.restart1 prod.restart3
+run 50000000
+
+
+write_data data*.xyz
+write_restart 	restart.polymer_ring
+
+print "ALL done"
